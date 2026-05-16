@@ -138,19 +138,56 @@ html,body{height:100%;font-family:'Jost',sans-serif;background:var(--bg0);color:
 .typing span:nth-child(3){animation-delay:.3s}
 @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
 
-/* ── Responsive ── */
-@media(max-width:640px){
-  .app{grid-template-columns:1fr}
-  .sidebar{display:none}
+/* ── Responsive mobile ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;position:relative}
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;width:280px;
+    transform:translateX(-100%);transition:transform .3s ease;
+    z-index:100;box-shadow:4px 0 20px rgba(0,0,0,.5)
+  }
+  .sidebar.open{transform:translateX(0)}
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+    z-index:99;opacity:0;transition:opacity .3s
+  }
+  .overlay.visible{display:block;opacity:1}
+  .mobile-header{
+    display:flex;align-items:center;gap:10px;
+    background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:10px 14px;flex-shrink:0
+  }
+  .mobile-menu-btn{
+    background:none;border:none;color:var(--gold);
+    font-size:22px;cursor:pointer;padding:4px;line-height:1
+  }
+  .mobile-logo{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold)}
+  .chat-header{height:auto;padding:8px 12px;flex-wrap:wrap;gap:6px}
+  .hdr-btn{padding:5px 10px;font-size:10px}
+  .msg-bubble{font-size:15px}
+  .main-input{font-size:15px}
+}
+@media(min-width:769px){
+  .mobile-header{display:none}
+  .overlay{display:none!important}
 }
 </style>
 </head>
 <body>
 
+<div class="overlay" id="overlay" onclick="fermerSidebar()"></div>
+
 <div class="app">
 
+  <!-- ── Mobile header ── -->
+  <div class="mobile-header">
+    <button class="mobile-menu-btn" onclick="ouvrirSidebar()">☰</button>
+    <div class="mobile-logo">Prof IA</div>
+    <div id="mobileXp" style="font-size:11px;color:var(--gold);margin-left:auto"></div>
+  </div>
+
   <!-- ── Sidebar ── -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo">Prof IA</div>
       <div class="logo-sub">Le savoir est infini</div>
@@ -727,6 +764,31 @@ chargerEleves();
 document.getElementById("mainInput").addEventListener("keydown", e => {
   if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); }
 });
+
+function ouvrirSidebar() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("overlay").classList.add("visible");
+}
+function fermerSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("visible");
+}
+
+// Ferme la sidebar sur mobile après sélection d'un élève
+const _selOriginal = selectionnerEleve;
+selectionnerEleve = async function(eid) {
+  fermerSidebar();
+  await _selOriginal(eid);
+};
+
+// Met à jour XP mobile
+function majXPMobile(xp) {
+  const el = document.getElementById("mobileXp");
+  if(el) {
+    const {nom} = niveauXP(xp);
+    el.textContent = `${nom} · ${xp} XP`;
+  }
+}
 </script>
 </body>
 </html>
