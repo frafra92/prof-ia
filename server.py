@@ -16,20 +16,38 @@ BASE_DIR   = os.path.dirname(__file__)
 ELEVES_DIR = os.path.join(BASE_DIR, "eleves")
 os.makedirs(ELEVES_DIR, exist_ok=True)
 
+def get_famille_dir(code_famille):
+    """Retourne le dossier de la famille — isolé des autres."""
+    if not code_famille:
+        code_famille = "default"
+    # Nettoie le code — alphanumerique uniquement
+    code = "".join(c for c in code_famille.upper() if c.isalnum())[:20]
+    if not code:
+        code = "default"
+    d = os.path.join(ELEVES_DIR, code)
+    os.makedirs(d, exist_ok=True)
+    return d, code
+
+def profil_path_f(code, eid):
+    return os.path.join(ELEVES_DIR, code, eid, "eleve.json")
+
+def parcours_path_f(code, eid):
+    return os.path.join(ELEVES_DIR, code, eid, "parcours.json")
+
 def get_api_key():
     """Clé API depuis variable d'environnement."""
     return os.environ.get("ANTHROPIC_API_KEY", "")
 
 def get_model():
-    return os.environ.get("MODEL", "claude-opus-4-5")
+    return os.environ.get("MODEL", "claude-sonnet-4-6")
 
 # ── Helpers profil ────────────────────────────────────────────
 
-def profil_path(eid): return os.path.join(ELEVES_DIR, eid, "eleve.json")
-def parcours_path(eid): return os.path.join(ELEVES_DIR, eid, "parcours.json")
+def profil_path(eid, code="default"): return os.path.join(ELEVES_DIR, code, eid, "eleve.json")
+def parcours_path(eid, code="default"): return os.path.join(ELEVES_DIR, code, eid, "parcours.json")
 
-def charger_parcours(eid):
-    p = parcours_path(eid)
+def charger_parcours(eid, code="default"):
+    p = parcours_path(eid, code)
     if os.path.exists(p):
         with open(p, "r", encoding="utf-8") as f: return json.load(f)
     return {"sujets":{},"echanges":[],"xp":0,"badges":[],
@@ -37,19 +55,19 @@ def charger_parcours(eid):
             "streak":0,"derniere_visite":"","defi_fait_aujourd_hui":False,
             "cartes_debloquees":[]}
 
-def sauvegarder_parcours(eid, data):
-    os.makedirs(os.path.join(ELEVES_DIR, eid), exist_ok=True)
-    with open(parcours_path(eid), "w", encoding="utf-8") as f:
+def sauvegarder_parcours(eid, data, code="default"):
+    os.makedirs(os.path.join(ELEVES_DIR, code, eid), exist_ok=True)
+    with open(parcours_path(eid, code), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-def charger_profil(eid):
-    p = profil_path(eid)
+def charger_profil(eid, code="default"):
+    p = profil_path(eid, code)
     if os.path.exists(p):
         with open(p, "r", encoding="utf-8") as f: return json.load(f)
     return None
 
-def mettre_a_jour_streak(eid):
-    data = charger_parcours(eid)
+def mettre_a_jour_streak(eid, code="default"):
+    data = charger_parcours(eid, code)
     aujourd_hui = str(date.today())
     derniere = data.get("derniere_visite", "")
     streak = data.get("streak", 0)
@@ -62,7 +80,7 @@ def mettre_a_jour_streak(eid):
         data["streak"] = streak
         data["derniere_visite"] = aujourd_hui
         data["defi_fait_aujourd_hui"] = False
-        sauvegarder_parcours(eid, data)
+        sauvegarder_parcours(eid, data, code)
     return data.get("streak", streak), est_nouveau
 
 # ── Prompt prof ───────────────────────────────────────────────
@@ -139,16 +157,20 @@ def ping():
 
 @app.route("/api/eleves", methods=["GET"])
 def lister_eleves():
+    code = request.args.get("code", "default")
+    _, code = get_famille_dir(code)
+    dossier = os.path.join(ELEVES_DIR, code)
     eleves = []
-    if not os.path.exists(ELEVES_DIR):
+    if not os.path.exists(dossier):
         return jsonify([])
-    for d in sorted(os.listdir(ELEVES_DIR)):
-        p = profil_path(d)
+    for d in sorted(os.listdir(dossier)):
+        p = profil_path(d, code)
         if not os.path.exists(p): continue
         with open(p, "r", encoding="utf-8") as f: profil = json.load(f)
-        parcours = charger_parcours(d)
+        parcours = charger_parcours(d, code)
         eleves.append({
             "id": d,
+            "code": code,
             "nom": profil.get("nom", "?"),
             "niveau": profil.get("niveau", "adulte"),
             "xp": parcours.get("xp", 0),
@@ -166,18 +188,22 @@ def creer_eleve():
     niveau = data.get("niveau", "adulte")
     aime   = data.get("aime", "tout")
     but    = data.get("but", "apprendre")
+    code   = data.get("code", "default")
+    _, code = get_famille_dir(code)
     eid    = f"{nom.lower().replace(' ','_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    os.makedirs(os.path.join(ELEVES_DIR, eid), exist_ok=True)
-    profil = {"id": eid, "nom": nom, "niveau": niveau,
+    os.makedirs(os.path.join(ELEVES_DIR, code, eid), exist_ok=True)
+    profil = {"id": eid, "code": code, "nom": nom, "niveau": niveau,
               "aime": aime, "but": but, "positionne": False}
-    with open(profil_path(eid), "w", encoding="utf-8") as f:
+    with open(profil_path(eid, code), "w", encoding="utf-8") as f:
         json.dump(profil, f, ensure_ascii=False, indent=2)
-    return jsonify({"id": eid, "profil": profil})
+    return jsonify({"id": eid, "code": code, "profil": profil})
 
 @app.route("/api/eleves/<eid>", methods=["DELETE"])
 def supprimer_eleve(eid):
     import shutil
-    dossier = os.path.join(ELEVES_DIR, eid)
+    code = request.args.get("code", "default")
+    _, code = get_famille_dir(code)
+    dossier = os.path.join(ELEVES_DIR, code, eid)
     if os.path.exists(dossier):
         shutil.rmtree(dossier)
         return jsonify({"ok": True})
@@ -185,10 +211,12 @@ def supprimer_eleve(eid):
 
 @app.route("/api/eleves/<eid>", methods=["GET"])
 def get_eleve(eid):
-    profil = charger_profil(eid)
+    code = request.args.get("code", "default")
+    _, code = get_famille_dir(code)
+    profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Élève introuvable"}), 404
-    parcours = charger_parcours(eid)
-    streak, est_nouveau = mettre_a_jour_streak(eid)
+    parcours = charger_parcours(eid, code)
+    streak, est_nouveau = mettre_a_jour_streak(eid, code)
     return jsonify({
         "profil": profil,
         "parcours": {
@@ -208,14 +236,16 @@ def chat():
     """Route principale — reçoit un message, retourne la réponse du prof."""
     data   = request.json
     eid    = data.get("eleve_id", "")
+    code   = data.get("code", "default")
+    _, code = get_famille_dir(code)
     msg    = data.get("message", "").strip()
     if not eid or not msg:
         return jsonify({"error": "Paramètres manquants"}), 400
 
-    profil = charger_profil(eid)
+    profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Élève introuvable"}), 404
 
-    parcours = charger_parcours(eid)
+    parcours = charger_parcours(eid, code)
     historique = parcours.get("echanges", [])[-10:]
     nb_echanges = len(parcours.get("echanges", []))
 
@@ -252,7 +282,7 @@ def chat():
         {"role": "prof", "contenu": reponse, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
     parcours["echanges"] = parcours["echanges"][-40:]
     parcours["xp"] = parcours.get("xp", 0) + 10
-    sauvegarder_parcours(eid, parcours)
+    sauvegarder_parcours(eid, parcours, code)
 
     return jsonify({
         "reponse": reponse,
@@ -326,15 +356,17 @@ def finaliser_positionnement():
     """Marque l'élève comme positionné et met à jour son niveau."""
     data  = request.json
     eid   = data.get("eleve_id", "")
+    code  = data.get("code", "default")
+    _, code = get_famille_dir(code)
     score = data.get("score", 0)
     MAPPING = {0:"cp",1:"ce1",2:"ce2",3:"cm1",4:"cm2",
                5:"6e",6:"4e",7:"seconde",8:"premiere",9:"terminale",10:"adulte"}
     niveau = MAPPING.get(min(score,10), "6e")
-    profil = charger_profil(eid)
+    profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Introuvable"}), 404
     profil["niveau"] = niveau
     profil["positionne"] = True
-    with open(profil_path(eid), "w", encoding="utf-8") as f:
+    with open(profil_path(eid, code), "w", encoding="utf-8") as f:
         json.dump(profil, f, ensure_ascii=False, indent=2)
     return jsonify({"niveau": niveau, "profil": profil})
 
@@ -344,9 +376,11 @@ def amorce():
     import anthropic
     data   = request.json
     eid    = data.get("eleve_id", "")
-    profil = charger_profil(eid)
+    code   = data.get("code", "default")
+    _, code = get_famille_dir(code)
+    profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Introuvable"}), 404
-    parcours = charger_parcours(eid)
+    parcours = charger_parcours(eid, code)
     sujets = []
     if isinstance(parcours.get("sujets"), dict):
         for v in parcours["sujets"].values(): sujets.extend(v)
@@ -374,9 +408,11 @@ def defi():
     import anthropic
     data   = request.json
     eid    = data.get("eleve_id", "")
-    profil = charger_profil(eid)
+    code   = data.get("code", "default")
+    _, code = get_famille_dir(code)
+    profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Introuvable"}), 404
-    parcours = charger_parcours(eid)
+    parcours = charger_parcours(eid, code)
     if parcours.get("defi_fait_aujourd_hui"):
         return jsonify({"fait": True})
 
@@ -418,10 +454,12 @@ JSON : {{"correct": true/false}}"""
         debut = texte.find("{"); fin = texte.rfind("}")
         result = json.loads(texte[debut:fin+1])
         if result.get("correct"):
-            parcours = charger_parcours(eid)
+            code = data.get("code", "default")
+        _, code = get_famille_dir(code)
+        parcours = charger_parcours(eid, code)
             parcours["xp"] = parcours.get("xp", 0) + 20
             parcours["defi_fait_aujourd_hui"] = True
-            sauvegarder_parcours(eid, parcours)
+            sauvegarder_parcours(eid, parcours, code)
             result["xp"] = parcours["xp"]
         return jsonify(result)
     except Exception as e:
