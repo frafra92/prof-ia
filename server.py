@@ -1,3 +1,4 @@
+
 """
 Prof IA — Backend Flask
 Sert l'API de chat, gère les profils élèves, appelle Claude.
@@ -17,15 +18,8 @@ ELEVES_DIR = os.path.join(BASE_DIR, "eleves")
 os.makedirs(ELEVES_DIR, exist_ok=True)
 
 def get_api_key():
-    """Clé API depuis variable d'environnement (sécurisé) ou config.py (local)."""
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if key: return key
-    try:
-        sys.path.insert(0, os.path.join(BASE_DIR, ".."))
-        from config import ANTHROPIC_API_KEY
-        return ANTHROPIC_API_KEY
-    except Exception:
-        return ""
+    """Clé API depuis variable d'environnement."""
+    return os.environ.get("ANTHROPIC_API_KEY", "")
 
 def get_model():
     return os.environ.get("MODEL", "claude-opus-4-5")
