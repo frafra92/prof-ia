@@ -1,4 +1,3 @@
-
 """
 Prof IA — Backend Flask
 Sert l'API de chat, gère les profils élèves, appelle Claude.
@@ -129,7 +128,14 @@ REGISTRE {niveau} : {registre}{relance}"""
 
 @app.route("/api/ping")
 def ping():
-    return jsonify({"ok": True, "version": "Prof IA Web 1.0"})
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    return jsonify({
+        "ok": True,
+        "version": "Prof IA Web 1.0",
+        "key_present": bool(key),
+        "key_start": key[:8] if key else "VIDE",
+        "env_keys": [k for k in os.environ.keys() if "ANTHROP" in k.upper() or "API" in k.upper()]
+    })
 
 @app.route("/api/eleves", methods=["GET"])
 def lister_eleves():
