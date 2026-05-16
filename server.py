@@ -272,6 +272,8 @@ Réponds UNIQUEMENT avec un tableau JSON valide :
   {"numero":10,"question":"...","reponse_attendue":"...","niveau_cible":"terminale"}
 ]"""
     try:
+        print(f"[POSITIONNER] Clé API: {get_api_key()[:12]}...")
+        print(f"[POSITIONNER] Modèle: {get_model()}")
         resp = client.messages.create(
             model=get_model(), max_tokens=1500,
             messages=[{"role":"user","content":prompt}])
@@ -281,7 +283,10 @@ Réponds UNIQUEMENT avec un tableau JSON valide :
         questions = json.loads(texte)
         return jsonify({"questions": questions})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        print(f"[ERREUR POSITIONNER] {type(e).__name__}: {e}")
+        print(traceback.format_exc())
+        return jsonify({"error": str(e), "type": type(e).__name__}), 500
 
 @app.route("/api/positionner/valider", methods=["POST"])
 def valider_reponse_positionnement():
