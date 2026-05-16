@@ -453,10 +453,10 @@ JSON : {{"correct": true/false}}"""
         texte = resp.content[0].text.strip()
         debut = texte.find("{"); fin = texte.rfind("}")
         result = json.loads(texte[debut:fin+1])
-        if result.get("correct"):
-            code = data.get("code", "default")
+        code = data.get("code", "default")
         _, code = get_famille_dir(code)
-        parcours = charger_parcours(eid, code)
+        if result.get("correct"):
+            parcours = charger_parcours(eid, code)
             parcours["xp"] = parcours.get("xp", 0) + 20
             parcours["defi_fait_aujourd_hui"] = True
             sauvegarder_parcours(eid, parcours, code)
