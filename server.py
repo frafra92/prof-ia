@@ -465,6 +465,57 @@ JSON : {{"correct": true/false}}"""
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ── Route Admin ──────────────────────────────────────────────
+
+@app.route("/api/admin", methods=["GET"])
+def admin():
+    """Tableau de bord admin — protégé par code secret."""
+    code_admin = request.args.get("code", "")
+    code_secret = os.environ.get("ADMIN_CODE", "PROFIAADMIN")
+    if code_admin != code_secret:
+        return jsonify({"error": "Accès refusé"}), 403
+
+    familles = []
+    if not os.path.exists(ELEVES_DIR):
+        return jsonify({"familles": []})
+
+    for code_famille in sorted(os.listdir(ELEVES_DIR)):
+        dossier = os.path.join(ELEVES_DIR, code_famille)
+        if not os.path.isdir(dossier): continue
+        eleves_data = []
+        for eid in sorted(os.listdir(dossier)):
+            p = profil_path(eid, code_famille)
+            if not os.path.exists(p): continue
+            with open(p, "r", encoding="utf-8") as f: profil = json.load(f)
+            parcours = charger_parcours(eid, code_famille)
+            nb_messages = len(parcours.get("echanges", []))
+            sujets = []
+            if isinstance(parcours.get("sujets"), dict):
+                for v in parcours["sujets"].values(): sujets.extend(v)
+            eleves_data.append({
+                "nom": profil.get("nom", "?"),
+                "niveau": profil.get("niveau", "adulte"),
+                "xp": parcours.get("xp", 0),
+                "streak": parcours.get("streak", 0),
+                "nb_messages": nb_messages,
+                "nb_sujets": len(sujets),
+                "derniere_visite": parcours.get("derniere_visite", "jamais"),
+                "badges": len(parcours.get("badges", [])),
+                "cartes": len(parcours.get("cartes_debloquees", [])),
+            })
+        if eleves_data:
+            familles.append({
+                "code": code_famille,
+                "nb_eleves": len(eleves_data),
+                "eleves": eleves_data,
+                "total_messages": sum(e["nb_messages"] for e in eleves_data),
+            })
+
+    return jsonify({
+        "nb_familles": len(familles),
+        "familles": familles
+    })
+
 # ── Sert le frontend ──────────────────────────────────────────
 
 @app.route("/", defaults={"path": ""})
