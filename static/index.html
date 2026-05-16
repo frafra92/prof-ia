@@ -131,6 +131,24 @@ html,body{height:100%;font-family:'Jost',sans-serif;background:var(--bg0);color:
 .defi-valider{padding:10px 16px;background:var(--orange);border:none;border-radius:8px;color:#1a0a00;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
 .defi-fermer{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;align-self:flex-start;line-height:1}
 
+/* ── Écran connexion ── */
+.login-screen{
+  position:fixed;inset:0;background:var(--bg0);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:200;gap:20px
+}
+.login-screen.hidden{display:none}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;color:var(--gold);font-style:italic}
+.login-sub{font-size:13px;color:var(--text2);letter-spacing:.1em;text-transform:uppercase}
+.login-cacco{font-size:52px;margin:8px 0}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:320px;display:flex;flex-direction:column;gap:14px}
+.login-label{font-size:12px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.login-input{padding:12px 16px;background:var(--bg1);border:2px solid var(--border);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:18px;outline:none;text-align:center;letter-spacing:.15em;text-transform:uppercase;transition:border-color .2s}
+.login-input:focus{border-color:var(--gold)}
+.login-btn{padding:14px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:background .2s}
+.login-btn:hover{background:var(--violet-lt)}
+.login-hint{font-size:11px;color:var(--text2);text-align:center;line-height:1.5}
+
 /* ── Spinner ── */
 .typing{display:flex;gap:5px;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:4px 12px 12px 12px;width:fit-content}
 .typing span{width:7px;height:7px;border-radius:50%;background:var(--text2);animation:bounce .9s infinite}
@@ -174,6 +192,25 @@ html,body{height:100%;font-family:'Jost',sans-serif;background:var(--bg0);color:
 </style>
 </head>
 <body>
+
+<!-- ── Écran de connexion ── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">Prof IA</div>
+  <div class="login-sub">Le savoir est infini</div>
+  <div class="login-cacco">🐒</div>
+  <div class="login-box">
+    <div class="login-label">Ton code famille</div>
+    <input class="login-input" id="loginCode" placeholder="EX: FAMILLE42"
+           maxlength="20"
+           onkeydown="if(event.key==='Enter') seConnecter()"
+           oninput="this.value=this.value.toUpperCase()">
+    <button class="login-btn" onclick="seConnecter()">Entrer dans Prof IA</button>
+    <div class="login-hint">
+      Choisis un code unique pour ta famille.<br>
+      Ce code protège tes élèves et tes progrès.
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="overlay" onclick="fermerSidebar()"></div>
 
@@ -283,9 +320,11 @@ html,body{height:100%;font-family:'Jost',sans-serif;background:var(--bg0);color:
 </div>
 
 <script>
-const API = "";  // même origine — Flask sert le frontend
+const API = "";
 
 // ── État global ──────────────────────────────────────────────
+let codeFamille = localStorage.getItem("prof_ia_code") || "";
+
 let etatApp = {
   eleveActif: null,
   positionne: false,
@@ -297,6 +336,23 @@ let etatApp = {
   caccoCycleIdx: 0,
   enCours: false,
 };
+
+function seConnecter() {
+  const code = document.getElementById("loginCode").value.trim().toUpperCase();
+  if(!code || code.length < 3) {
+    document.getElementById("loginCode").style.borderColor = "var(--red)";
+    return;
+  }
+  codeFamille = code;
+  localStorage.setItem("prof_ia_code", code);
+  document.getElementById("loginScreen").classList.add("hidden");
+  chargerEleves();
+}
+
+// Au chargement — si code déjà sauvegardé, passe directement
+if(codeFamille) {
+  document.getElementById("loginScreen").classList.add("hidden");
+}
 
 const NIVEAUX_NOMS = ["Éveillé","Curieux","Explorateur","Chercheur","Penseur","Sage","Maître"];
 const NIVEAUX_SEUILS = [0,100,250,500,1000,2000,5000];
@@ -362,7 +418,16 @@ function scrollDebutDernierMsg() {
 
 async function api(route, method="GET", body=null) {
   const opts = {method, headers:{"Content-Type":"application/json"}};
-  if(body) opts.body = JSON.stringify(body);
+  if(body) {
+    // Ajoute le code famille dans le body POST
+    if(!body.code) body.code = codeFamille;
+    opts.body = JSON.stringify(body);
+  }
+  // Ajoute le code famille dans les GET
+  if(method === "GET" && codeFamille) {
+    const sep = route.includes("?") ? "&" : "?";
+    route = route + sep + "code=" + encodeURIComponent(codeFamille);
+  }
   const r = await fetch(API + route, opts);
   return r.json();
 }
@@ -760,7 +825,7 @@ async function voirProfil() {
 
 // ── Init ─────────────────────────────────────────────────────
 
-chargerEleves();
+if(codeFamille) chargerEleves();
 document.getElementById("mainInput").addEventListener("keydown", e => {
   if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); }
 });
