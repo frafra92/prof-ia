@@ -174,6 +174,15 @@ def creer_eleve():
         json.dump(profil, f, ensure_ascii=False, indent=2)
     return jsonify({"id": eid, "profil": profil})
 
+@app.route("/api/eleves/<eid>", methods=["DELETE"])
+def supprimer_eleve(eid):
+    import shutil
+    dossier = os.path.join(ELEVES_DIR, eid)
+    if os.path.exists(dossier):
+        shutil.rmtree(dossier)
+        return jsonify({"ok": True})
+    return jsonify({"error": "Introuvable"}), 404
+
 @app.route("/api/eleves/<eid>", methods=["GET"])
 def get_eleve(eid):
     profil = charger_profil(eid)
