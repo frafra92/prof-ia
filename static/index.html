@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Prof IA — Tuteur éducatif intelligent pour enfants et adultes. Du CP au bac, apprends en dialoguant avec un professeur IA.">
+<meta name="theme-color" content="#0a0a12">
+<meta property="og:title" content="Prof IA">
+<meta property="og:description" content="Ton tuteur IA personnel — du CP au bac et au-delà.">
+<meta property="og:type" content="website">
+<title>Prof IA — Tuteur éducatif intelligent</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-dim: #8a6e2f;
+  --bg0: #0a0a12;
+  --bg1: #0f0f1a;
+  --bg2: #13132a;
+  --bg3: #1a1a35;
+  --border: #2a2a4a;
+  --violet: #534AB7;
+  --violet-lt: #7F77DD;
+  --text1: #e0e0ff;
+  --text2: #6b6b9a;
+  --green: #1D9E75;
+  --orange: #EF9F27;
+  --red: #E24B4A;
+  --fire: #FF6B35;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Jost',sans-serif;background:var(--bg0);color:var(--text1);font-size:16px;overflow:hidden}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:280px 1fr;height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold);letter-spacing:.05em}
+.logo-sub{font-size:11px;color:var(--text2);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.btn-nouveau{width:100%;margin-top:12px;padding:10px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s}
+.btn-nouveau:hover{background:var(--violet-lt)}
+.eleves-list{flex:1;overflow-y:auto;padding:8px}
+.eleve-card{padding:12px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .2s;background:var(--bg2);position:relative}
+.eleve-card:hover{border-color:var(--gold-dim)}
+.eleve-card.actif{border-color:var(--gold);background:var(--bg3)}
+.eleve-avatar{width:32px;height:32px;border-radius:50%;background:var(--violet);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#EEEDFE;float:left;margin-right:10px}
+.eleve-nom{font-size:13px;font-weight:500;color:var(--text1)}
+.eleve-info{font-size:11px;color:var(--text2);margin-top:2px}
+.eleve-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;opacity:0;transition:opacity .2s}
+.eleve-card:hover .eleve-del{opacity:1}
+
+/* ── Formulaire nouvel élève ── */
+.form-panel{padding:16px;display:none;flex-direction:column;gap:10px}
+.form-panel.visible{display:flex}
+.form-label{font-size:11px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.form-input{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:'Jost',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--gold)}
+.form-select{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:'Jost',sans-serif;font-size:13px;outline:none;cursor:pointer}
+.form-select option{background:var(--bg2)}
+.btn-retour{background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;margin-bottom:4px;padding:0}
+.btn-retour:hover{color:var(--text1)}
+.btn-creer{padding:10px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;transition:background .2s;margin-top:4px}
+.btn-creer:hover{background:var(--violet-lt)}
+
+/* ── Zone principale ── */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg0)}
+.accueil{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text2);gap:12px}
+.accueil-titre{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);font-style:italic}
+.accueil-sub{font-size:14px;color:var(--text2)}
+
+/* ── Header chat ── */
+.chat-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0;overflow-x:auto}
+.chat-header::-webkit-scrollbar{display:none}
+.hdr-avatar{width:30px;height:30px;border-radius:50%;background:var(--violet);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#EEEDFE;flex-shrink:0}
+.hdr-nom{font-size:14px;font-weight:500;color:var(--text1);flex-shrink:0}
+.hdr-xp{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.hdr-xp-txt{font-size:11px;color:var(--gold);font-weight:500}
+.hdr-xp-bar{width:100px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.hdr-xp-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
+.hdr-streak{font-size:13px;color:var(--fire);flex-shrink:0}
+.hdr-spacer{flex:1}
+.hdr-btn{padding:6px 12px;border-radius:6px;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0;border:1px solid}
+.btn-defi{background:var(--orange);border-color:var(--orange);color:#1a0a00}
+.btn-examen{background:var(--violet);border-color:var(--violet);color:#EEEDFE}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text1)}
+
+/* ── Messages ── */
+.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.msg{max-width:75%;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg-prof{align-self:flex-start}
+.msg-eleve{align-self:flex-end}
+.msg-label{font-size:10px;color:var(--text2);margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase}
+.msg-bubble{padding:14px 18px;border-radius:12px;font-size:17px;line-height:1.65}
+.msg-prof .msg-bubble{background:var(--bg3);border:1px solid var(--border);color:var(--text1);border-radius:4px 12px 12px 12px}
+.msg-eleve .msg-bubble{background:var(--violet);color:#EEEDFE;border-radius:12px 4px 12px 12px}
+.msg-notif{align-self:center;font-size:13px;color:var(--green);padding:3px 0}
+.msg-positionnement .msg-bubble{background:var(--bg2);border:1px solid var(--gold);color:var(--gold)}
+.msg-defi .msg-bubble{background:#1a1000;border:1px solid var(--orange);color:var(--orange)}
+.msg-erreur{align-self:center;font-size:13px;color:var(--red)}
+.msg-cacco{align-self:center;background:#120800;border:1px solid #BA8A30;border-radius:10px;padding:10px 20px;text-align:center;max-width:400px}
+.cacco-emoji{font-size:42px;display:block;margin-bottom:4px}
+.cacco-texte{font-size:13px;color:#BA8A30;font-style:italic}
+.cacco-proverbe{font-size:13px;color:var(--gold);font-style:italic;margin-top:6px;line-height:1.5}
+
+/* ── Champ positionnement ── */
+.pos-bloc{background:#1a1200;border:2px solid var(--gold);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.pos-label{font-size:13px;font-weight:500;color:var(--gold)}
+.pos-row{display:flex;gap:8px}
+.pos-input{flex:1;padding:10px 14px;background:#0d0900;border:2px solid var(--gold);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:16px;outline:none}
+.pos-btn{padding:10px 18px;background:var(--gold);border:none;border-radius:8px;color:#412402;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+
+/* ── Zone de saisie ── */
+.input-zone{background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;flex-shrink:0}
+.main-input{flex:1;padding:11px 16px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:17px;outline:none;resize:none;height:46px;transition:border-color .2s}
+.main-input:focus{border-color:var(--gold-dim)}
+.main-input:disabled{opacity:.5}
+.send-btn{padding:0 20px;background:var(--gold);border:none;border-radius:8px;color:#412402;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .2s;white-space:nowrap}
+.send-btn:hover{background:#b8963a}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Défi panel ── */
+.defi-panel{background:#1a1000;border-top:2px solid var(--orange);padding:14px 16px;display:none;flex-direction:column;gap:10px;flex-shrink:0}
+.defi-panel.visible{display:flex}
+.defi-question{font-size:16px;color:var(--orange);font-weight:500}
+.defi-indice{font-size:13px;color:var(--text2)}
+.defi-row{display:flex;gap:8px}
+.defi-input{flex:1;padding:10px 14px;background:#0d0900;border:1px solid var(--orange);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:15px;outline:none}
+.defi-valider{padding:10px 16px;background:var(--orange);border:none;border-radius:8px;color:#1a0a00;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.defi-fermer{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;align-self:flex-start;line-height:1}
+
+/* ── Écran connexion ── */
+.login-screen{
+  position:fixed;inset:0;background:var(--bg0);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:200;gap:20px
+}
+.login-screen.hidden{display:none}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;color:var(--gold);font-style:italic}
+.login-sub{font-size:13px;color:var(--text2);letter-spacing:.1em;text-transform:uppercase}
+.login-cacco{font-size:52px;margin:8px 0}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:320px;display:flex;flex-direction:column;gap:14px}
+.login-label{font-size:12px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.login-input{padding:12px 16px;background:var(--bg1);border:2px solid var(--border);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:18px;outline:none;text-align:center;letter-spacing:.15em;text-transform:uppercase;transition:border-color .2s}
+.login-input:focus{border-color:var(--gold)}
+.login-btn{padding:14px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:background .2s}
+.login-btn:hover{background:var(--violet-lt)}
+.login-hint{font-size:11px;color:var(--text2);text-align:center;line-height:1.5}
+
+/* ── Spinner ── */
+.typing{display:flex;gap:5px;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:4px 12px 12px 12px;width:fit-content}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--text2);animation:bounce .9s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* ── Responsive mobile ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;position:relative}
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;width:280px;
+    transform:translateX(-100%);transition:transform .3s ease;
+    z-index:100;box-shadow:4px 0 20px rgba(0,0,0,.5)
+  }
+  .sidebar.open{transform:translateX(0)}
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+    z-index:99;opacity:0;transition:opacity .3s
+  }
+  .overlay.visible{display:block;opacity:1}
+  .mobile-header{
+    display:flex;align-items:center;gap:10px;
+    background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:10px 14px;flex-shrink:0
+  }
+  .mobile-menu-btn{
+    background:none;border:none;color:var(--gold);
+    font-size:22px;cursor:pointer;padding:4px;line-height:1
+  }
+  .mobile-logo{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold)}
+  .chat-header{height:auto;padding:8px 12px;flex-wrap:wrap;gap:6px}
+  .hdr-btn{padding:5px 10px;font-size:10px}
+  .msg-bubble{font-size:15px}
+  .main-input{font-size:15px}
+}
+@media(min-width:769px){
+  .mobile-header{display:none}
+  .overlay{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Écran de connexion ── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">Prof IA</div>
+  <div class="login-sub">Le savoir est infini</div>
+  <div class="login-cacco" aria-hidden="true">🐒</div>
+  <div class="login-box">
+    <div class="login-label">Ton code famille</div>
+    <input class="login-input" id="loginCode" placeholder="EX: FAMILLE42"
+           maxlength="20"
+           onkeydown="if(event.key==='Enter') seConnecter()"
+           oninput="this.value=this.value.toUpperCase()">
+    <button class="login-btn" onclick="seConnecter()">Entrer dans Prof IA</button>
+    <div class="login-hint">
+      Choisis un code unique pour ta famille (min. 4 caractères).<br>
+      Ce code protège tes élèves et tes progrès.<br>
+      <span style="color:var(--text2)">Exemple : MARTIN2026</span>
+    </div>
+    <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:4px">
+      En continuant, vous acceptez notre
+      <a href="/mentions.html" target="_blank" style="color:var(--gold)">politique de confidentialité</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="fermerSidebar()"></div>
+
+<div class="app">
+
+  <!-- ── Mobile header ── -->
+  <div class="mobile-header">
+    <button class="mobile-menu-btn" onclick="ouvrirSidebar()">☰</button>
+    <div class="mobile-logo">Prof IA</div>
+    <div id="mobileXp" style="font-size:11px;color:var(--gold);margin-left:auto"></div>
+  </div>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">Prof IA</div>
+      <div class="logo-sub">Le savoir est infini</div>
+      <button class="btn-nouveau" onclick="afficherFormulaire()">+ Nouvel élève</button>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="form-panel" id="formPanel">
+      <button class="btn-retour" onclick="cacherFormulaire()">← Retour</button>
+      <div>
+        <div class="form-label">Prénom</div>
+        <input class="form-input" id="fNom" placeholder="ex: Emma">
+      </div>
+      <div>
+        <div class="form-label">Âge</div>
+        <input class="form-input" id="fAge" placeholder="ex: 10">
+      </div>
+      <div>
+        <div class="form-label">Ce qu'il/elle aime</div>
+        <input class="form-input" id="fAime" placeholder="ex: dinosaures, espace">
+      </div>
+      <div>
+        <div class="form-label">Niveau indicatif</div>
+        <select class="form-select" id="fNiveau">
+          <option value="cp">CP</option><option value="ce1">CE1</option>
+          <option value="ce2">CE2</option><option value="cm1">CM1</option>
+          <option value="cm2">CM2</option><option value="6e">6e</option>
+          <option value="5e">5e</option><option value="4e">4e</option>
+          <option value="3e">3e</option><option value="seconde">Seconde</option>
+          <option value="premiere">Première</option><option value="terminale">Terminale</option>
+          <option value="adulte" selected>Adulte</option>
+          <option value="thesard">Thésard</option>
+        </select>
+      </div>
+      <button class="btn-creer" onclick="creerEleve()">Créer et démarrer</button>
+    </div>
+
+    <!-- Liste élèves -->
+    <div class="eleves-list" id="elevesList"></div>
+  </aside>
+
+  <!-- ── Zone principale ── -->
+  <main class="main" id="mainZone">
+    <div class="accueil" id="accueil">
+      <div class="accueil-titre">Bienvenue</div>
+      <div class="accueil-sub">Sélectionne un élève ou crée-en un nouveau</div>
+      <div style="font-size:40px;margin-top:8px">🐒</div>
+    </div>
+
+    <!-- Chat (caché au départ) -->
+    <div id="chatZone" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+      <!-- Header -->
+      <div class="chat-header" id="chatHeader">
+        <div class="hdr-avatar" id="hdrAvatar"></div>
+        <div class="hdr-nom" id="hdrNom"></div>
+        <div class="hdr-xp">
+          <div class="hdr-xp-txt" id="hdrXpTxt"></div>
+          <div class="hdr-xp-bar"><div class="hdr-xp-fill" id="hdrXpFill" style="width:0%"></div></div>
+        </div>
+        <div class="hdr-streak" id="hdrStreak"></div>
+        <div class="hdr-spacer"></div>
+        <button class="hdr-btn btn-defi" onclick="lancerDefi()">⚡ Défi</button>
+        <button class="hdr-btn btn-ghost" onclick="voirProfil()">Profil</button>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages" id="messages"></div>
+
+      <!-- Défi panel -->
+      <div class="defi-panel" id="defiPanel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:11px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">⚡ Défi du jour — 20 XP</div>
+            <div class="defi-question" id="defiQuestion"></div>
+            <div class="defi-indice" id="defiIndice"></div>
+          </div>
+          <button class="defi-fermer" onclick="fermerDefi()">×</button>
+        </div>
+        <div class="defi-row">
+          <input class="defi-input" id="defiInput" placeholder="Ta réponse..." onkeydown="if(event.key==='Enter')validerDefi()">
+          <button class="defi-valider" onclick="validerDefi()">Valider</button>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="input-zone">
+        <input class="main-input" id="mainInput" placeholder="Pose une question, dis ce que tu penses..."
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();envoyer()}">
+        <button class="send-btn" id="sendBtn" onclick="envoyer()">Envoyer</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = "";
+
+// ── État global ──────────────────────────────────────────────
+let codeFamille = localStorage.getItem("prof_ia_code") || "";
+
+let etatApp = {
+  eleveActif: null,
+  positionne: false,
+  questions: [],
+  indexQuestion: 0,
+  scorePositionnement: 0,
+  defiData: null,
+  caccoCompteur: 0,
+  caccoCycleIdx: 0,
+  enCours: false,
+};
+
+function seConnecter() {
+  const code = document.getElementById("loginCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const interdits = ["1234","AZERTY","FAMILLE","TEST","0000","1111","ADMIN"];
+  if(!code || code.length < 4 || interdits.includes(code)) {
+    document.getElementById("loginCode").style.borderColor = "var(--red)";
+    document.getElementById("loginCode").placeholder = "Min. 4 caractères, original";
+    return;
+  }
+  codeFamille = code;
+  localStorage.setItem("prof_ia_code", code);
+  document.getElementById("loginScreen").classList.add("hidden");
+  chargerEleves();
+}
+
+// Au chargement — si code déjà sauvegardé, passe directement
+if(codeFamille) {
+  document.getElementById("loginScreen").classList.add("hidden");
+}
+
+const NIVEAUX_NOMS = ["Éveillé","Curieux","Explorateur","Chercheur","Penseur","Sage","Maître"];
+const NIVEAUX_SEUILS = [0,100,250,500,1000,2000,5000];
+const CACCO_SAGESSE = [
+  "Seul on va plus vite, ensemble on va plus loin.",
+  "Ne sois pas arrogant de ta connaissance, mais consulte l'ignorant comme le savant.",
+  "Je sais que je ne sais rien.",
+  "Peu importe la lenteur à laquelle tu vas, tant que tu ne t'arrêtes pas.",
+  "Un voyage de mille lieues commence toujours par un premier pas.",
+  "La curiosité est la mère de toute connaissance.",
+  "Celui qui sait ne parle pas. Celui qui parle ne sait pas.",
+  "Hier j'étais intelligent, je voulais changer le monde. Aujourd'hui je suis sage, je me change moi-même.",
+  "La rivière ne se souvient pas de sa source, mais elle lui doit tout.",
+  "La question est plus précieuse que la réponse.",
+  "Tu n'es pas une goutte dans l'océan. Tu es l'océan tout entier dans une goutte.",
+  "Quelle que soit la longueur de la nuit, le jour finit par se lever.",
+  "L'homme, connais-toi toi-même et tu connaîtras les dieux et l'univers.",
+  "Ce n'est pas parce que c'est difficile que nous n'osons pas. C'est parce que nous n'osons pas que c'est difficile.",
+  "Apprendre sans cesse, c'est rester jeune.",
+];
+const CACCO_ETATS = [
+  {emoji:"🐒", texte:"Hm... Cacco réfléchit aussi..."},
+  {emoji:"🐒🍌", texte:"Il y a une banane quelque part..."},
+  {emoji:"🐒👆", texte:"Continue ! Le savoir est infini !"},
+  {emoji:"😤🐒", texte:"Cacco attend une VRAIE question !"},
+  {emoji:"👑🐒", texte:"Même les babouins savent ça."},
+  {emoji:"😴🐒", texte:"...tu travailles encore ?"},
+  {emoji:"🐒💃", texte:"OOH OOH ! Cacco danse !"},
+  {emoji:"📚🐒", texte:"La connaissance est une lumière..."},
+];
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function niveauXP(xp) {
+  let idx = 0;
+  for(let i = NIVEAUX_SEUILS.length-1; i >= 0; i--) {
+    if(xp >= NIVEAUX_SEUILS[i]) { idx = i; break; }
+  }
+  return {idx, nom: NIVEAUX_NOMS[Math.min(idx, NIVEAUX_NOMS.length-1)]};
+}
+
+function majBarreXP(xp) {
+  const {idx, nom} = niveauXP(xp);
+  document.getElementById("hdrXpTxt").textContent = `${nom} · ${xp} XP`;
+  const sa = NIVEAUX_SEUILS[idx] || 0;
+  const ss = NIVEAUX_SEUILS[idx+1] || xp+1;
+  const pct = Math.min(100, Math.round((xp-sa)/(ss-sa)*100));
+  document.getElementById("hdrXpFill").style.width = pct + "%";
+}
+
+function scrollBas() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
+}
+
+function scrollDebutDernierMsg() {
+  const m = document.getElementById("messages");
+  const msgs = m.querySelectorAll(".msg-prof, .msg-positionnement");
+  if(msgs.length === 0) return;
+  const dernier = msgs[msgs.length-1];
+  setTimeout(() => { dernier.scrollIntoView({behavior:"smooth", block:"start"}); }, 80);
+}
+
+async function api(route, method="GET", body=null) {
+  const opts = {method, headers:{"Content-Type":"application/json"}};
+  if(body) {
+    // Ajoute le code famille dans le body POST
+    if(!body.code) body.code = codeFamille;
+    opts.body = JSON.stringify(body);
+  }
+  // Ajoute le code famille dans les GET
+  if(method === "GET" && codeFamille) {
+    const sep = route.includes("?") ? "&" : "?";
+    route = route + sep + "code=" + encodeURIComponent(codeFamille);
+  }
+  const r = await fetch(API + route, opts);
+  return r.json();
+}
+
+// ── Sidebar ──────────────────────────────────────────────────
+
+function afficherFormulaire() {
+  document.getElementById("formPanel").classList.add("visible");
+  document.getElementById("elevesList").style.display = "none";
+}
+
+function cacherFormulaire() {
+  document.getElementById("formPanel").classList.remove("visible");
+  document.getElementById("elevesList").style.display = "block";
+}
+
+async function chargerEleves() {
+  const eleves = await api("/api/eleves");
+  const liste = document.getElementById("elevesList");
+  liste.innerHTML = "";
+  if(!eleves.length) {
+    liste.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">Aucun élève.<br>Clique sur + Nouvel élève.</div>';
+    return;
+  }
+  eleves.forEach(e => {
+    const {nom} = e;
+    const {nom: nomNiv} = niveauXP(e.xp);
+    const flamme = e.streak >= 3 ? "🔥" : e.streak >= 1 ? "🔥" : "";
+    const actif = etatApp.eleveActif && etatApp.eleveActif.id === e.id ? " actif" : "";
+    const card = document.createElement("div");
+    card.className = "eleve-card" + actif;
+    card.innerHTML = `
+      <div class="eleve-avatar">${nom.slice(0,2).toUpperCase()}</div>
+      <div class="eleve-nom">${nom} ${flamme}</div>
+      <div class="eleve-info">${e.niveau} · ${nomNiv} · ${e.xp} XP</div>
+      <button class="eleve-del" onclick="event.stopPropagation();supprimerEleve('${e.id}','${nom}')">✕</button>`;
+    card.onclick = () => selectionnerEleve(e.id);
+    liste.appendChild(card);
+  });
+}
+
+async function creerEleve() {
+  const nom   = document.getElementById("fNom").value.trim() || "Élève";
+  const aime  = document.getElementById("fAime").value.trim() || "tout";
+  const niveau = document.getElementById("fNiveau").value;
+  const data = await api("/api/eleves","POST",{nom,aime,niveau});
+  cacherFormulaire();
+  document.getElementById("fNom").value = "";
+  document.getElementById("fAime").value = "";
+  await chargerEleves();
+  await selectionnerEleve(data.id);
+}
+
+async function selectionnerEleve(eid) {
+  const data = await api(`/api/eleves/${eid}`);
+  etatApp.eleveActif = {...data.profil, id: eid};
+  etatApp.caccoCompteur = 0;
+  etatApp.caccoCycleIdx = 0;
+  await chargerEleves();
+  ouvrirChat(data);
+}
+
+function supprimerEleve(eid, nom) {
+  if(!confirm(`Supprimer ${nom} ?`)) return;
+  fetch(API + `/api/eleves/${eid}`, {method:"DELETE"}).then(() => {
+    if(etatApp.eleveActif && etatApp.eleveActif.id === eid) {
+      etatApp.eleveActif = null;
+      document.getElementById("accueil").style.display = "flex";
+      document.getElementById("chatZone").style.display = "none";
+    }
+    chargerEleves();
+  }).catch(() => chargerEleves());
+}
+
+// ── Chat ─────────────────────────────────────────────────────
+
+function ouvrirChat(data) {
+  document.getElementById("accueil").style.display = "none";
+  const cz = document.getElementById("chatZone");
+  cz.style.display = "flex";
+
+  const p = data.profil;
+  const parc = data.parcours;
+  document.getElementById("hdrAvatar").textContent = p.nom.slice(0,2).toUpperCase();
+  document.getElementById("hdrNom").textContent = p.nom;
+  majBarreXP(parc.xp);
+  const streak = parc.streak || 0;
+  document.getElementById("hdrStreak").textContent = streak >= 1 ? `🔥 ${streak}j` : "";
+
+  // Vider messages
+  document.getElementById("messages").innerHTML = "";
+
+  // Message de bienvenue
+  const {nom: nomNiv} = niveauXP(parc.xp);
+  let bienvenue = `Bonjour ${p.nom} ! [${nomNiv} — ${parc.xp} XP]`;
+  if(parc.est_nouveau_jour && streak > 0) bienvenue += `\n\n${messageStreak(streak, p.nom)}`;
+  if(!parc.defi_fait) bienvenue += `\n\n⚡ Le défi du jour t'attend !`;
+  ajouterMsg("Prof", bienvenue, "prof");
+
+  // Positionner ou amorce
+  if(!p.positionne) {
+    setTimeout(() => demarrerPositionnement(), 400);
+  } else {
+    setTimeout(() => genererAmorce(), 400);
+  }
+}
+
+function messageStreak(streak, nom) {
+  if(streak === 1) return `Bienvenue ${nom} ! Premier jour — la curiosité commence ici !`;
+  if(streak === 7) return `Une semaine ${nom} ! Tu es impressionnant — 7 jours sans interruption 🔥🔥`;
+  if(streak === 30) return `Un mois ${nom} ! C'est extraordinaire 🔥🔥🔥🔥🔥`;
+  return `${streak} jours de suite ${nom} ! Continue comme ça 🔥`;
+}
+
+function ajouterMsg(nom, texte, role) {
+  const m = document.getElementById("messages");
+  const wrapper = document.createElement("div");
+
+  if(role === "prof" || role === "positionnement" || role === "defi") {
+    wrapper.className = `msg msg-${role}`;
+    wrapper.innerHTML = `
+      <div class="msg-label">${role === "prof" ? "Prof" : role === "positionnement" ? "Positionnement" : "Défi"}</div>
+      <div class="msg-bubble">${texte.replace(/\n/g,"<br>")}</div>`;
+    m.appendChild(wrapper);
+    scrollDebutDernierMsg();
+  } else if(role === "eleve") {
+    wrapper.className = "msg msg-eleve";
+    wrapper.innerHTML = `<div class="msg-bubble">${texte.replace(/\n/g,"<br>")}</div>`;
+    m.appendChild(wrapper);
+    scrollBas();
+  } else if(role === "notif") {
+    wrapper.className = "msg-notif";
+    wrapper.textContent = texte;
+    m.appendChild(wrapper);
+    scrollBas();
+  } else if(role === "erreur") {
+    wrapper.className = "msg-erreur";
+    wrapper.textContent = texte;
+    m.appendChild(wrapper);
+    scrollBas();
+  } else if(role === "cacco") {
+    wrapper.className = "msg msg-cacco";
+    wrapper.innerHTML = texte;
+    m.appendChild(wrapper);
+    scrollBas();
+  }
+}
+
+function ajouterTyping() {
+  const m = document.getElementById("messages");
+  const t = document.createElement("div");
+  t.className = "msg msg-prof"; t.id = "typingIndicator";
+  t.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  m.appendChild(t);
+  scrollBas();
+}
+
+function retirerTyping() {
+  const t = document.getElementById("typingIndicator");
+  if(t) t.remove();
+}
+
+async function envoyer() {
+  const input = document.getElementById("mainInput");
+  const msg = input.value.trim();
+  if(!msg || etatApp.enCours || !etatApp.eleveActif) return;
+
+  input.value = "";
+  ajouterMsg(etatApp.eleveActif.nom, msg, "eleve");
+  etatApp.enCours = true;
+  document.getElementById("sendBtn").disabled = true;
+  document.getElementById("mainInput").disabled = true;
+  ajouterTyping();
+
+  try {
+    const data = await api("/api/chat","POST",{
+      eleve_id: etatApp.eleveActif.id,
+      message: msg
+    });
+    retirerTyping();
+    if(data.error) {
+      const msg = data.error.includes("Limite") 
+        ? "⏳ " + data.error 
+        : "Le prof réfléchit trop fort 🤔 " + data.error;
+      ajouterMsg("", msg, "erreur");
+    } else {
+      ajouterMsg("Prof", data.reponse, "prof");
+      majBarreXP(data.xp);
+      const {nom: nomNiv} = niveauXP(data.xp);
+      ajouterMsg("", `+ 10 XP · ${data.xp} XP · ${nomNiv}`, "notif");
+      reagirCacco(false);
+      chargerEleves();
+    }
+  } catch(e) {
+    retirerTyping();
+    ajouterMsg("","Le prof réfléchit trop fort 🤔 Réessaie dans un instant !","erreur");
+  }
+
+  etatApp.enCours = false;
+  document.getElementById("sendBtn").disabled = false;
+  document.getElementById("mainInput").disabled = false;
+  document.getElementById("mainInput").focus();
+}
+
+// ── Cacco ────────────────────────────────────────────────────
+
+function reagirCacco(nouvelleCarte=false) {
+  etatApp.caccoCompteur++;
+  const RYTHME = [3,4,5];
+  const prochain = RYTHME[etatApp.caccoCycleIdx % 3];
+  if(etatApp.caccoCompteur < prochain && !nouvelleCarte) return;
+  etatApp.caccoCompteur = 0;
+  etatApp.caccoCycleIdx++;
+
+  const avecSagesse = (etatApp.caccoCycleIdx % 2 === 0) || nouvelleCarte === false;
+  let emoji, texte, proverbe = null;
+
+  if(nouvelleCarte) {
+    emoji = "🐒🎉"; texte = "OOH OOH OOH ! NOUVELLE CARTE !";
+  } else if(avecSagesse) {
+    emoji = "📚🐒✨";
+    texte = "Cacco partage une pensée...";
+    proverbe = CACCO_SAGESSE[Math.floor(Math.random()*CACCO_SAGESSE.length)];
+  } else {
+    const e = CACCO_ETATS[Math.floor(Math.random()*CACCO_ETATS.length)];
+    emoji = e.emoji; texte = e.texte;
+  }
+
+  let html = `<span class="cacco-emoji">${emoji}</span><span class="cacco-texte">${texte}</span>`;
+  if(proverbe) html += `<div class="cacco-proverbe">« ${proverbe} »</div>`;
+  ajouterMsg("","<div>" + html + "</div>","cacco");
+}
+
+// ── Positionnement ───────────────────────────────────────────
+
+async function demarrerPositionnement() {
+  document.getElementById("mainInput").disabled = true;
+  document.getElementById("sendBtn").disabled = true;
+  ajouterMsg("Prof",
+    `Bienvenue ! Je vais te poser 10 questions du plus simple au plus complexe. C'est un jeu, pas un test ! Réponds ce que tu sais.`,
+    "positionnement");
+  ajouterTyping();
+  const data = await api("/api/positionner","POST",{});
+  retirerTyping();
+  if(data.error || !data.questions?.length) {
+    ajouterMsg("","Impossible de générer les questions — vérifie ta connexion.","erreur");
+    document.getElementById("mainInput").disabled = false;
+    document.getElementById("sendBtn").disabled = false;
+    return;
+  }
+  etatApp.questions = data.questions;
+  etatApp.indexQuestion = 0;
+  etatApp.scorePositionnement = 0;
+  poserQuestion();
+}
+
+function poserQuestion() {
+  const q = etatApp.questions[etatApp.indexQuestion];
+  ajouterMsg("Prof", `Question ${q.numero}/10 : ${q.question}`, "prof");
+
+  const m = document.getElementById("messages");
+  const bloc = document.createElement("div");
+  bloc.className = "pos-bloc"; bloc.id = "posBloc";
+  bloc.innerHTML = `
+    <div class="pos-label">✏️ Ta réponse (ou /stop pour arrêter)</div>
+    <div class="pos-row">
+      <input class="pos-input" id="posInput" placeholder="Écris ta réponse ici...">
+      <button class="pos-btn" onclick="validerPositionnement()">OK →</button>
+    </div>`;
+  m.appendChild(bloc);
+  setTimeout(() => {
+    document.getElementById("posInput")?.focus();
+    bloc.scrollIntoView({behavior:"smooth",block:"start"});
+  }, 100);
+  document.getElementById("posInput").addEventListener("keydown", e => {
+    if(e.key === "Enter") validerPositionnement();
+  });
+}
+
+async function validerPositionnement() {
+  const input = document.getElementById("posInput");
+  const rep = input?.value?.trim();
+  if(!rep) return;
+
+  document.getElementById("posBloc")?.remove();
+  ajouterMsg(etatApp.eleveActif.nom, rep, "eleve");
+
+  if(rep.toLowerCase() === "/stop") {
+    finaliserPositionnement();
+    return;
+  }
+
+  const q = etatApp.questions[etatApp.indexQuestion];
+  ajouterTyping();
+  const data = await api("/api/positionner/valider","POST",{
+    question: q.question,
+    reponse_attendue: q.reponse_attendue,
+    reponse_eleve: rep
+  });
+  retirerTyping();
+
+  if(data.correct) {
+    etatApp.scorePositionnement++;
+    ajouterMsg("",`✓ ${data.commentaire || "Bien !"}`, "notif");
+  } else {
+    ajouterMsg("",`Réponse : ${q.reponse_attendue}`, "erreur");
+  }
+
+  etatApp.indexQuestion++;
+  if(etatApp.indexQuestion < etatApp.questions.length) {
+    setTimeout(() => poserQuestion(), 300);
+  } else {
+    finaliserPositionnement();
+  }
+}
+
+async function finaliserPositionnement() {
+  ajouterTyping();
+  const data = await api("/api/finaliser_positionnement","POST",{
+    eleve_id: etatApp.eleveActif.id,
+    score: etatApp.scorePositionnement
+  });
+  retirerTyping();
+  etatApp.eleveActif.positionne = true;
+  etatApp.eleveActif.niveau = data.niveau;
+  ajouterMsg("Prof",
+    `Niveau détecté : ${data.niveau}. On explore ensemble à ton rythme. Qu'est-ce qui te rend curieux ?`,
+    "positionnement");
+  document.getElementById("mainInput").disabled = false;
+  document.getElementById("sendBtn").disabled = false;
+  document.getElementById("mainInput").focus();
+  chargerEleves();
+  setTimeout(() => genererAmorce(), 500);
+}
+
+// ── Amorce proactive ─────────────────────────────────────────
+
+async function genererAmorce() {
+  document.getElementById("sendBtn").disabled = true;
+  ajouterTyping();
+  const data = await api("/api/amorce","POST",{eleve_id: etatApp.eleveActif.id});
+  retirerTyping();
+  if(data.amorce) ajouterMsg("Prof", data.amorce, "prof");
+  document.getElementById("sendBtn").disabled = false;
+}
+
+// ── Défi du jour ─────────────────────────────────────────────
+
+async function lancerDefi() {
+  if(!etatApp.eleveActif) return;
+  const data = await api("/api/defi","POST",{eleve_id: etatApp.eleveActif.id});
+  if(data.fait) {
+    ajouterMsg("Prof","Tu as déjà relevé le défi du jour ! Reviens demain.","prof");
+    return;
+  }
+  if(data.error) { ajouterMsg("","Erreur défi","erreur"); return; }
+  etatApp.defiData = data;
+  document.getElementById("defiQuestion").textContent = data.question;
+  document.getElementById("defiIndice").textContent = `💡 Indice : ${data.indice}`;
+  document.getElementById("defiPanel").classList.add("visible");
+  document.getElementById("defiInput").focus();
+}
+
+function fermerDefi() {
+  document.getElementById("defiPanel").classList.remove("visible");
+}
+
+async function validerDefi() {
+  const rep = document.getElementById("defiInput").value.trim();
+  if(!rep || !etatApp.defiData) return;
+  ajouterMsg(etatApp.eleveActif.nom, rep, "eleve");
+  fermerDefi();
+  const data = await api("/api/defi/valider","POST",{
+    eleve_id: etatApp.eleveActif.id,
+    question: etatApp.defiData.question,
+    reponse: etatApp.defiData.reponse,
+    reponse_eleve: rep
+  });
+  if(data.correct) {
+    ajouterMsg("Prof",`Bravo ! ${etatApp.defiData.pourquoi_cest_cool}\n\n+ 20 XP bonus !`,"prof");
+    if(data.xp) majBarreXP(data.xp);
+    reagirCacco(true);
+  } else {
+    ajouterMsg("Prof",`La réponse était : ${etatApp.defiData.reponse}.\n\n${etatApp.defiData.pourquoi_cest_cool}`,"prof");
+  }
+  document.getElementById("defiInput").value = "";
+}
+
+// ── Profil ───────────────────────────────────────────────────
+
+async function voirProfil() {
+  if(!etatApp.eleveActif) return;
+  const data = await api(`/api/eleves/${etatApp.eleveActif.id}`);
+  const p = data.parcours;
+  const {nom: nomNiv} = niveauXP(p.xp);
+  alert(`${etatApp.eleveActif.nom}\n\nNiveau : ${etatApp.eleveActif.niveau}\n${nomNiv} — ${p.xp} XP\nStreak : ${p.streak} jours\nSujets explorés : ${p.nb_sujets}\nBadges : ${p.badges.join(", ") || "aucun"}`);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+
+if(codeFamille) chargerEleves();
+document.getElementById("mainInput").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); }
+});
+
+function ouvrirSidebar() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("overlay").classList.add("visible");
+}
+function fermerSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("visible");
+}
+
+// Ferme la sidebar sur mobile après sélection d'un élève
+const _selOriginal = selectionnerEleve;
+selectionnerEleve = async function(eid) {
+  fermerSidebar();
+  await _selOriginal(eid);
+};
+
+// Met à jour XP mobile
+function majXPMobile(xp) {
+  const el = document.getElementById("mobileXp");
+  if(el) {
+    const {nom} = niveauXP(xp);
+    el.textContent = `${nom} · ${xp} XP`;
+  }
+}
+</script>
+</body>
+</html>
