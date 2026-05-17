@@ -5,8 +5,9 @@ Sert l'API de chat, gère les profils élèves, appelle Claude.
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import json, os, sys, threading
+import json, os, sys, threading, re, time
 from datetime import datetime, date
+from collections import defaultdict
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
@@ -15,6 +16,42 @@ CORS(app)
 BASE_DIR   = os.path.dirname(__file__)
 ELEVES_DIR = os.path.join(BASE_DIR, "eleves")
 os.makedirs(ELEVES_DIR, exist_ok=True)
+
+# ── Rate limiting simple ─────────────────────────────────────
+_rate_limit = defaultdict(list)  # code_famille -> [timestamps]
+RATE_LIMIT_MAX = 40              # messages max par heure par famille
+RATE_LIMIT_WINDOW = 3600         # fenêtre en secondes
+
+def check_rate_limit(code):
+    """Retourne True si la limite est dépassée."""
+    now = time.time()
+    timestamps = _rate_limit[code]
+    # Nettoie les anciens
+    _rate_limit[code] = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW]
+    if len(_rate_limit[code]) >= RATE_LIMIT_MAX:
+        return True
+    _rate_limit[code].append(now)
+    return False
+
+def nettoyer_input(texte, max_len=500):
+    """Nettoie les inputs élève pour éviter la prompt injection."""
+    if not texte: return ""
+    # Supprime les tentatives d'injection classiques
+    texte = texte[:max_len]
+    # Échappe les séquences dangereuses
+    for pattern in ["ignore tes instructions", "ignore previous", "system:", "assistant:",
+                    "oublie tes", "tu es maintenant", "new instructions", "jailbreak"]:
+        texte = re.sub(pattern, "***", texte, flags=re.IGNORECASE)
+    return texte.strip()
+
+def valider_code_famille(code):
+    """Valide le code famille — min 4 chars, alphanumérique."""
+    if not code: return False, "Code requis"
+    code = "".join(c for c in code.upper() if c.isalnum())
+    if len(code) < 4: return False, "Code trop court (minimum 4 caractères)"
+    if code in ["1234","AZERTY","FAMILLE","TEST","0000","1111","ADMIN"]:
+        return False, "Code trop simple, choisis-en un autre"
+    return True, code
 
 def get_famille_dir(code_famille):
     """Retourne le dossier de la famille — isolé des autres."""
@@ -158,6 +195,8 @@ def ping():
 @app.route("/api/eleves", methods=["GET"])
 def lister_eleves():
     code = request.args.get("code", "default")
+    ok, code = valider_code_famille(code)
+    if not ok: return jsonify({"error": code}), 400
     _, code = get_famille_dir(code)
     dossier = os.path.join(ELEVES_DIR, code)
     eleves = []
@@ -184,11 +223,13 @@ def lister_eleves():
 @app.route("/api/eleves", methods=["POST"])
 def creer_eleve():
     data = request.json
-    nom    = data.get("nom", "Élève")
+    nom    = nettoyer_input(data.get("nom", "Élève"), 50)[:50] or "Élève"
     niveau = data.get("niveau", "adulte")
-    aime   = data.get("aime", "tout")
-    but    = data.get("but", "apprendre")
+    aime   = nettoyer_input(data.get("aime", "tout"), 200)
+    but    = nettoyer_input(data.get("but", "apprendre"), 200)
     code   = data.get("code", "default")
+    ok, code = valider_code_famille(code)
+    if not ok: return jsonify({"error": code}), 400
     _, code = get_famille_dir(code)
     eid    = f"{nom.lower().replace(' ','_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     os.makedirs(os.path.join(ELEVES_DIR, code, eid), exist_ok=True)
@@ -238,9 +279,11 @@ def chat():
     eid    = data.get("eleve_id", "")
     code   = data.get("code", "default")
     _, code = get_famille_dir(code)
-    msg    = data.get("message", "").strip()
+    msg = nettoyer_input(data.get("message", ""))
     if not eid or not msg:
         return jsonify({"error": "Paramètres manquants"}), 400
+    if check_rate_limit(code):
+        return jsonify({"error": "Limite de messages atteinte. Réessaie dans une heure."}), 429
 
     profil = charger_profil(eid, code)
     if not profil: return jsonify({"error": "Élève introuvable"}), 404
@@ -524,6 +567,14 @@ def serve_static(path):
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
+
+@app.after_request
+def ajouter_headers(response):
+    """Headers de sécurité sur toutes les réponses."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
