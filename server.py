@@ -508,6 +508,178 @@ JSON : {{"correct": true/false}}"""
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ── Routes visualisation ──────────────────────────────────────
+
+@app.route("/api/visualisation/<eid>", methods=["GET"])
+def get_visualisation(eid):
+    """Retourne toutes les données de visualisation d'un élève."""
+    code = request.args.get("code", "default")
+    _, code = get_famille_dir(code)
+    profil = charger_profil(eid, code)
+    if not profil: return jsonify({"error": "Introuvable"}), 404
+    parcours = charger_parcours(eid, code)
+
+    # Sujets par matière pour la forêt
+    sujets_par_mat = parcours.get("sujets", {})
+    if not isinstance(sujets_par_mat, dict): sujets_par_mat = {}
+
+    # Ponts détectés pour les lianes
+    ponts = parcours.get("ponts", [])
+
+    # Maîtrise pour la taille des branches
+    maitrise = parcours.get("maitrise", {})
+
+    # Cartes débloquées
+    cartes_ids = parcours.get("cartes_debloquees", [])
+
+    # Construire les points géo à partir des sujets
+    texte_sujets = " ".join(
+        s for v in sujets_par_mat.values() for s in (v if isinstance(v,list) else [])
+    ).lower()
+    texte_maitrise = " ".join(maitrise.keys()).lower()
+    texte_total = texte_sujets + " " + texte_maitrise
+
+    # GEO_DB simplifié — mots-clés → coordonnées
+    GEO = [
+        {"lat":48.85,"lon":2.35,  "lb":"Paris",           "col":"#c9a84c","r":4, "mots":["paris","france","tour eiffel","eiffel"]},
+        {"lat":30.05,"lon":31.23, "lb":"Le Caire",         "col":"#c9a84c","r":4, "mots":["caire","egypte","nil"]},
+        {"lat":35.68,"lon":139.69,"lb":"Tokyo",            "col":"#c9a84c","r":3, "mots":["tokyo","japon","japonais"]},
+        {"lat":51.5, "lon":-0.12, "lb":"Londres",          "col":"#c9a84c","r":3, "mots":["londres","angleterre","newton","shakespeare"]},
+        {"lat":41.9, "lon":12.49, "lb":"Rome",             "col":"#c9a84c","r":3, "mots":["rome","romain","colisee","seneque"]},
+        {"lat":37.97,"lon":23.72, "lb":"Athènes",          "col":"#c9a84c","r":3, "mots":["athenes","grece","socrate","platon","acropole"]},
+        {"lat":52.52,"lon":13.4,  "lb":"Berlin",           "col":"#c9a84c","r":3, "mots":["berlin","allemagne","einstein","beethoven"]},
+        {"lat":29.97,"lon":31.13, "lb":"Pyramides",        "col":"#1D9E75","r":5, "mots":["pyramide","gizeh","egypte","pharaon","imhotep"]},
+        {"lat":48.86,"lon":2.29,  "lb":"Tour Eiffel",      "col":"#1D9E75","r":4, "mots":["eiffel","paris"]},
+        {"lat":27.17,"lon":78.04, "lb":"Taj Mahal",        "col":"#1D9E75","r":4, "mots":["taj","inde","moghol"]},
+        {"lat":41.89,"lon":12.49, "lb":"Colisée",          "col":"#1D9E75","r":4, "mots":["colisee","rome","gladiateur"]},
+        {"lat":37.97,"lon":23.72, "lb":"Acropole",         "col":"#1D9E75","r":4, "mots":["acropole","athenes","parthenon"]},
+        {"lat":47.58,"lon":-3.08, "lb":"Carnac",           "col":"#1D9E75","r":4, "mots":["carnac","megalithes","crowhurst","bretagne"]},
+        {"lat":16.77,"lon":-3.0,  "lb":"Tombouctou",       "col":"#1D9E75","r":4, "mots":["tombouctou","mali","afrique","askia"]},
+        {"lat":30.0, "lon":31.2,  "lb":"Égypte ancienne",  "col":"#534AB7","r":6, "mots":["egypte","pharaon","ptahhotep","ani","amenemope","imhotep","nefertiti"]},
+        {"lat":37.5, "lon":23.5,  "lb":"Grèce antique",    "col":"#534AB7","r":5, "mots":["grece","socrate","platon","aristote","pythagore"]},
+        {"lat":41.9, "lon":12.5,  "lb":"Empire romain",    "col":"#534AB7","r":5, "mots":["rome","romain","seneque","cesar","latin"]},
+        {"lat":35.0, "lon":105.0, "lb":"Chine ancienne",   "col":"#534AB7","r":5, "mots":["chine","confucius","sun tzu","tao","lao tseu"]},
+        {"lat":12.0, "lon":-8.0,  "lb":"Empire du Mali",   "col":"#534AB7","r":5, "mots":["mali","soundiata","tombouctou","afrique"]},
+        {"lat":33.0, "lon":44.0,  "lb":"Mésopotamie",      "col":"#534AB7","r":4, "mots":["mesopotamie","babylone","sumer"]},
+        {"lat":51.5, "lon":-0.12, "lb":"Newton",           "col":"#97C459","r":4, "mots":["newton","gravite","physique"]},
+        {"lat":52.52,"lon":13.4,  "lb":"Einstein",         "col":"#97C459","r":4, "mots":["einstein","relativite"]},
+        {"lat":48.85,"lon":2.35,  "lb":"Marie Curie",      "col":"#97C459","r":4, "mots":["curie","radioactivite","chimie"]},
+        {"lat":51.5, "lon":-0.12, "lb":"Darwin",           "col":"#97C459","r":4, "mots":["darwin","evolution","especes","galapagos"]},
+        {"lat":33.99,"lon":-6.85, "lb":"Ibn Battuta",      "col":"#D85A30","r":4, "mots":["ibn battuta","maroc","voyage"]},
+        {"lat":40.42,"lon":-3.7,  "lb":"Colomb",           "col":"#D85A30","r":4, "mots":["colomb","amerique","espagne"]},
+        {"lat":32.06,"lon":118.78,"lb":"Zheng He",         "col":"#D85A30","r":4, "mots":["zheng he","chine","flotte"]},
+        {"lat":46.86,"lon":103.84,"lb":"Gengis Khan",      "col":"#D85A30","r":4, "mots":["gengis","khan","mongolie"]},
+    ]
+
+    points_actifs = []
+    # Toujours Paris, Le Caire, Athènes comme base
+    base = ["paris","caire","athenes"]
+    for g in GEO:
+        if any(m in texte_total for m in g["mots"]) or any(m in g["mots"] for m in base[:3] if m in g["mots"]):
+            points_actifs.append({k:v for k,v in g.items() if k != "mots"})
+
+    # Forêt — données par matière
+    MATIERES = ["histoire","maths","sciences","geographie","français","philosophie","art",
+                "zoologie","musique","langues","geologie","cuisine"]
+    MATIERES_LABELS = {"histoire":"Histoire","maths":"Maths","sciences":"Sciences",
+                       "geographie":"Géographie","français":"Français","philosophie":"Philo",
+                       "art":"Art","zoologie":"Zoologie","musique":"Musique",
+                       "langues":"Langues","geologie":"Géologie","cuisine":"Cuisine"}
+    MATIERES_COLS = {"histoire":"#c9a84c","maths":"#534AB7","sciences":"#1D9E75",
+                     "geographie":"#D85A30","français":"#97C459","philosophie":"#D4537E",
+                     "art":"#5DCAA5","zoologie":"#EF9F27","musique":"#85B7EB",
+                     "langues":"#E8A87C","geologie":"#A8A8A8","cuisine":"#FF6B35"}
+
+    foret_data = []
+    for mat in MATIERES:
+        sujets = sujets_par_mat.get(mat, [])
+        if isinstance(sujets, list) and len(sujets) > 0:
+            score = sum(maitrise.get(s,0) for s in sujets)
+            foret_data.append({
+                "label": MATIERES_LABELS.get(mat, mat),
+                "col": MATIERES_COLS.get(mat, "#c9a84c"),
+                "nb_sujets": len(sujets),
+                "sujets": sujets[:8],
+                "score": score
+            })
+
+    # Si aucune matière explorée, montrer un arbre vide pour chaque
+    if not foret_data:
+        for mat in ["histoire","maths","sciences","geographie","français","philosophie","art"]:
+            foret_data.append({
+                "label": MATIERES_LABELS.get(mat, mat),
+                "col": MATIERES_COLS.get(mat, "#c9a84c"),
+                "nb_sujets": 0, "sujets": [], "score": 0
+            })
+
+    # Cartes débloquées avec leurs données complètes
+    CARTES_MINI = {
+        "socrate":   {"nom":"Socrate","epoque":"470–399 av. J.-C.","discipline":"Philosophie","rarity":"legendaire","citation":"Je sais que je ne sais rien.","stats":{"Sagesse":95,"Curiosité":99,"Impact":88,"Vision":90}},
+        "newton":    {"nom":"Newton","epoque":"1643–1727","discipline":"Sciences","rarity":"legendaire","citation":"Si j'ai vu loin, c'est en me hissant sur des épaules de géants.","stats":{"Sagesse":80,"Curiosité":92,"Impact":99,"Vision":95}},
+        "ptahhotep": {"nom":"Ptahhotep","epoque":"~2400 av. J.-C.","discipline":"Sagesse","rarity":"legendaire","citation":"Ne sois pas arrogant de ta connaissance.","stats":{"Sagesse":99,"Curiosité":88,"Impact":90,"Vision":96}},
+        "curie":     {"nom":"Marie Curie","epoque":"1867–1934","discipline":"Sciences","rarity":"legendaire","citation":"Dans la vie, rien n'est à craindre, tout est à comprendre.","stats":{"Sagesse":85,"Curiosité":96,"Impact":97,"Vision":90}},
+        "darwin":    {"nom":"Darwin","epoque":"1809–1882","discipline":"Sciences","rarity":"legendaire","citation":"Ce ne sont pas les espèces les plus fortes qui survivent, mais celles qui s'adaptent.","stats":{"Sagesse":82,"Curiosité":98,"Impact":98,"Vision":97}},
+        "einstein":  {"nom":"Einstein","epoque":"1879–1955","discipline":"Sciences","rarity":"legendaire","citation":"L'imagination est plus importante que la connaissance.","stats":{"Sagesse":85,"Curiosité":99,"Impact":99,"Vision":98}},
+        "ibnbattuta":{"nom":"Ibn Battuta","epoque":"1304–1368","discipline":"Géographie","rarity":"legendaire","citation":"Voyager, c'est triompher!","stats":{"Sagesse":85,"Curiosité":99,"Impact":88,"Vision":92}},
+        "vinci":     {"nom":"Léonard de Vinci","epoque":"1452–1519","discipline":"Art","rarity":"legendaire","citation":"L'eau est le moteur de toute la nature.","stats":{"Sagesse":90,"Curiosité":99,"Impact":97,"Vision":99}},
+        "gandhi":    {"nom":"Gandhi","epoque":"1869–1948","discipline":"Philosophie","rarity":"legendaire","citation":"Sois le changement que tu veux voir dans le monde.","stats":{"Sagesse":95,"Curiosité":82,"Impact":98,"Vision":96}},
+        "confucius": {"nom":"Confucius","epoque":"551–479 av. J.-C.","discipline":"Philosophie","rarity":"legendaire","citation":"Peu importe la lenteur à laquelle tu vas, tant que tu ne t'arrêtes pas.","stats":{"Sagesse":96,"Curiosité":80,"Impact":95,"Vision":92}},
+        "pieuvre":   {"nom":"La Pieuvre","epoque":"Vivante","discipline":"Zoologie","rarity":"rare","citation":"Trois coeurs, neuf cerveaux — une intelligence alien.","stats":{"Sagesse":70,"Curiosité":99,"Impact":80,"Vision":96}},
+        "elephant":  {"nom":"L'Éléphant","epoque":"Vivant","discipline":"Zoologie","rarity":"rare","citation":"Les éléphants pleurent leurs morts et se souviennent de leurs amis.","stats":{"Sagesse":88,"Curiosité":85,"Impact":82,"Vision":86}},
+        "bach":      {"nom":"Bach","epoque":"1685–1750","discipline":"Musique","rarity":"legendaire","citation":"La musique est une arithmétique de l'âme.","stats":{"Sagesse":90,"Curiosité":94,"Impact":99,"Vision":98}},
+        "volcan":    {"nom":"Le Volcan","epoque":"Ancestral","discipline":"Géologie","rarity":"rare","citation":"Un volcan est le souffle de la Terre.","stats":{"Sagesse":80,"Curiosité":96,"Impact":96,"Vision":92}},
+        "flocon":    {"nom":"Le Flocon","epoque":"Ancestral","discipline":"Géologie","rarity":"rare","citation":"Il n'existe pas deux flocons identiques — et pourtant tous hexagonaux.","stats":{"Sagesse":82,"Curiosité":98,"Impact":78,"Vision":96}},
+    }
+
+    cartes_debloquees = [
+        {**CARTES_MINI[cid], "id": cid}
+        for cid in cartes_ids if cid in CARTES_MINI
+    ]
+
+    # Aussi détecter nouvelles cartes selon sujets
+    CARTES_MOTS = {
+        "socrate":   ["socrate","philosophie","maieutique","grece"],
+        "newton":    ["newton","gravite","physique","angleterre"],
+        "ptahhotep": ["ptahhotep","egypte","sagesse","instructions"],
+        "curie":     ["curie","radioactivite","chimie"],
+        "darwin":    ["darwin","evolution","especes","galapagos","biologie"],
+        "einstein":  ["einstein","relativite","physique"],
+        "ibnbattuta":["ibn battuta","maroc","voyage","exploration"],
+        "vinci":     ["vinci","peinture","renaissance","inventions"],
+        "gandhi":    ["gandhi","inde","nonviolence"],
+        "confucius": ["confucius","chine","sagesse","enseignement"],
+        "pieuvre":   ["pieuvre","ocean","intelligence","cephalopode"],
+        "elephant":  ["elephant","afrique","memoire","intelligence"],
+        "bach":      ["bach","musique","gamme","baroque"],
+        "volcan":    ["volcan","geologie","terre","magma"],
+        "flocon":    ["flocon","neige","cristal","hexagone"],
+    }
+
+    nouvelles = []
+    for cid, mots in CARTES_MOTS.items():
+        if cid not in cartes_ids and any(m in texte_total for m in mots):
+            cartes_ids.append(cid)
+            if cid in CARTES_MINI:
+                nouvelles.append({**CARTES_MINI[cid], "id": cid})
+                cartes_debloquees.append({**CARTES_MINI[cid], "id": cid})
+
+    if nouvelles:
+        parc2 = charger_parcours(eid, code)
+        parc2["cartes_debloquees"] = cartes_ids
+        sauvegarder_parcours(eid, parc2, code)
+
+    return jsonify({
+        "foret": foret_data,
+        "ponts": ponts,
+        "globe_points": points_actifs,
+        "cartes": cartes_debloquees,
+        "nb_cartes_total": len(CARTES_MINI),
+        "nouvelles_cartes": nouvelles,
+        "xp": parcours.get("xp", 0),
+        "nb_sujets_total": sum(len(v) for v in sujets_par_mat.values() if isinstance(v,list)),
+    })
+
 # ── Route Admin ──────────────────────────────────────────────
 
 @app.route("/api/admin", methods=["GET"])
