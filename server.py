@@ -1,4 +1,7 @@
-
+"""
+Prof IA — Backend Flask
+Sert l'API de chat, gère les profils élèves, appelle Claude.
+"""
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -558,10 +561,14 @@ def admin():
 
 # ── Sert le frontend ──────────────────────────────────────────
 
-@app.route("/", defaults={"path": ""})
+@app.route("/")
+def home():
+    return send_from_directory(app.static_folder, "accueil.html")
+
 @app.route("/<path:path>")
 def serve_static(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
+    filepath = os.path.join(app.static_folder, path)
+    if os.path.exists(filepath):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
 
