@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="La Grosse Machine Algorithmique — Tuteur éducatif intelligent. Du CP au doctorat, apprends en dialoguant avec un professeur IA inspiré de Socrate, Platon et la sagesse millénaire.">
+<meta property="og:title" content="La Grosse Machine Algorithmique — Le savoir est infini">
+<meta property="og:description" content="Un tuteur IA unique qui éveille la curiosité plutôt que donner des réponses.">
+<title>La Grosse Machine Algorithmique — Le savoir est infini</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#c9a84c;--bg0:#06060f;--bg1:#0a0a18;--bg2:#101020;
+  --border:#1e1e38;--violet:#534AB7;--text1:#e8e8ff;--text2:#7070a0;
+  --green:#1D9E75;--teal:#5DCAA5
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Jost',sans-serif;background:var(--bg0);color:var(--text1);overflow-x:hidden}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,6,15,.85);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border)}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);font-weight:600;letter-spacing:.05em;text-decoration:none}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--text1)}
+.nav-cta{padding:8px 20px;background:var(--violet);border-radius:6px;color:#EEEDFE !important;font-weight:500}
+.nav-cta:hover{background:#6560cc !important}
+
+/* ── Hero ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
+.hero-stars{position:absolute;inset:0;pointer-events:none}
+.hero-eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;opacity:.8}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(42px,7vw,86px);font-weight:600;line-height:1.1;margin-bottom:20px}
+.hero-title span{color:var(--gold);font-style:italic}
+.hero-sub{font-size:clamp(15px,2vw,18px);color:var(--text2);max-width:560px;line-height:1.7;margin-bottom:40px}
+.hero-cta-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn-primary{padding:14px 32px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-primary:hover{background:#6560cc;transform:translateY(-1px)}
+.btn-secondary{padding:14px 32px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Jost',sans-serif;font-size:15px;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
+.hero-cacco{font-size:56px;margin-bottom:24px;animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ── Quote ── */
+.quote-section{padding:60px 24px;text-align:center;border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);background:var(--bg1)}
+.quote-text{font-family:'Cormorant Garamond',serif;font-size:clamp(20px,3vw,28px);font-style:italic;color:var(--gold);max-width:700px;margin:0 auto 12px;line-height:1.5}
+.quote-author{font-size:13px;color:var(--text2);letter-spacing:.08em}
+
+/* ── Comment ça marche ── */
+.section{padding:80px 24px;max-width:1100px;margin:0 auto}
+.section-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,42px);font-weight:600;margin-bottom:16px;line-height:1.2}
+.section-sub{font-size:15px;color:var(--text2);max-width:540px;line-height:1.7;margin-bottom:48px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.step{background:var(--bg1);border:0.5px solid var(--border);border-radius:12px;padding:28px}
+.step-num{font-family:'Cormorant Garamond',serif;font-size:36px;color:var(--gold);margin-bottom:12px;line-height:1}
+.step-title{font-size:16px;font-weight:500;margin-bottom:8px;color:var(--text1)}
+.step-desc{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ── Philosophie ── */
+.philo-section{background:var(--bg1);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:80px 24px}
+.philo-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.philo-text .section-sub{max-width:100%}
+.sages{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sage-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.sage-nom{font-size:13px;font-weight:500;color:var(--gold);margin-bottom:4px}
+.sage-desc{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* ── Domaines ── */
+.domaines{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.domaine{padding:6px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);transition:all .2s}
+.domaine:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ── Features ── */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.feature{background:var(--bg1);border:0.5px solid var(--border);border-radius:12px;padding:24px}
+.feature-icon{font-size:28px;margin-bottom:12px}
+.feature-title{font-size:14px;font-weight:500;margin-bottom:6px;color:var(--text1)}
+.feature-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* ── Dialogue démo ── */
+.demo-section{padding:80px 24px;max-width:700px;margin:0 auto}
+.demo-chat{background:var(--bg1);border:0.5px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.demo-msg{display:flex;flex-direction:column;gap:4px}
+.demo-label{font-size:10px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.demo-bubble{padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.65;max-width:85%}
+.demo-prof .demo-bubble{background:var(--bg2);border:0.5px solid var(--border);color:var(--text1);border-radius:4px 12px 12px 12px}
+.demo-eleve{align-self:flex-end;align-items:flex-end}
+.demo-eleve .demo-bubble{background:var(--violet);color:#EEEDFE;border-radius:12px 4px 12px 12px}
+
+/* ── CTA final ── */
+.cta-section{padding:100px 24px;text-align:center;background:var(--bg1);border-top:0.5px solid var(--border)}
+.cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,48px);color:var(--gold);margin-bottom:16px;font-style:italic}
+.cta-sub{font-size:15px;color:var(--text2);margin-bottom:40px}
+
+/* ── Footer ── */
+footer{padding:24px;text-align:center;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)}
+footer a{color:var(--text2);text-decoration:none}
+footer a:hover{color:var(--gold)}
+
+@media(max-width:768px){
+  nav{padding:12px 20px}
+  .nav-links{gap:12px}
+  .philo-inner{grid-template-columns:1fr}
+  .sages{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <a href="/" class="nav-logo">La Grosse Machine Algorithmique</a>
+  <div class="nav-links">
+    <a href="#philosophie">Philosophie</a>
+    <a href="#fonctionnalites">Fonctionnalités</a>
+    <a href="/mentions.html">Confidentialité</a>
+    <a href="/index.html" class="nav-cta">Commencer</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <canvas class="hero-stars" id="starsCanvas"></canvas>
+  <div aria-hidden="true" class="hero-cacco">🐒</div>
+  <div class="hero-eyebrow">Tuteur éducatif intelligent — Du CP au doctorat</div>
+  <h1 class="hero-title">Le savoir est<br><span>infini</span></h1>
+  <p class="hero-sub">La Grosse Machine Algorithmique éveille la curiosité plutôt que donner des réponses. Un professeur virtuel inspiré de Socrate, Platon et 5000 ans de sagesse humaine.</p>
+  <div class="hero-cta-row">
+    <a href="/index.html" class="btn-primary">Créer mon espace famille</a>
+    <a href="#comment" class="btn-secondary">Comment ça marche</a>
+  </div>
+</section>
+
+<!-- ── Citation ── -->
+<div class="quote-section">
+  <div class="quote-text">« Que nul n'entre ici s'il n'est géomètre. »</div>
+  <div class="quote-author">Inscription à l'entrée de l'Académie de Platon · ~387 av. J.-C.</div>
+</div>
+
+<!-- ── Comment ça marche ── -->
+<div class="section" id="comment">
+  <div class="section-eyebrow">Simple et efficace</div>
+  <h2 class="section-title">Comment ça marche</h2>
+  <p class="section-sub">En trois étapes, ton enfant entre dans un espace d'apprentissage personnalisé.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Crée un code famille</div>
+      <div class="step-desc">Choisis un code unique pour ta famille. Pas d'email, pas de mot de passe compliqué. Ton code protège l'espace de tes enfants.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Crée un profil élève</div>
+      <div class="step-desc">Prénom, niveau, centres d'intérêt. La Grosse Machine Algorithmique détecte automatiquement le niveau réel avec 10 questions progressives.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">La curiosité fait le reste</div>
+      <div class="step-desc">Le professeur pose des questions, ouvre des portes, crée des liens entre les disciplines. L'élève explore à son rythme.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Philosophie ── -->
+<div class="philo-section" id="philosophie">
+  <div class="philo-inner">
+    <div class="philo-text">
+      <div class="section-eyebrow">Notre philosophie</div>
+      <h2 class="section-title">Former au discernement, pas à la mémorisation</h2>
+      <p class="section-sub">La Grosse Machine Algorithmique ne donne pas les réponses. Il fait accoucher les idées. Comme Socrate le faisait avec ses élèves il y a 2500 ans — la maïeutique, l'art d'éveiller la pensée par le questionnement.<br><br>Notre objectif : amener l'élève aux premières marches de l'Académie de Platon. Former des esprits capables de discernement, sans passion ni préjugé.</p>
+      <div class="domaines">
+        <span class="domaine">Philosophie</span><span class="domaine">Sciences</span>
+        <span class="domaine">Histoire</span><span class="domaine">Mathématiques</span>
+        <span class="domaine">Zoologie</span><span class="domaine">Musique</span>
+        <span class="domaine">Géologie</span><span class="domaine">Langues</span>
+        <span class="domaine">Arts martiaux</span><span class="domaine">Cuisine & chimie</span>
+        <span class="domaine">Afrique & diaspora</span><span class="domaine">Monde marin</span>
+        <span class="domaine">Physique des ondes</span><span class="domaine">Mode & tissus</span>
+      </div>
+    </div>
+    <div class="sages">
+      <div class="sage-card"><div class="sage-nom">Socrate</div><div class="sage-desc">La maïeutique — faire accoucher les idées par le questionnement.</div></div>
+      <div class="sage-card"><div class="sage-nom">Ptahhotep</div><div class="sage-desc">~2400 av. J.-C. "Ne sois pas arrogant de ta connaissance."</div></div>
+      <div class="sage-card"><div class="sage-nom">Confucius</div><div class="sage-desc">La relation maître-élève est sacrée. Chaque échange est une graine.</div></div>
+      <div class="sage-card"><div class="sage-nom">Montessori</div><div class="sage-desc">Apprendre par le jeu, la découverte et l'expérience directe.</div></div>
+      <div class="sage-card"><div class="sage-nom">Sénèque</div><div class="sage-desc">La vérité avec élégance. Vivre dans l'instant présent.</div></div>
+      <div class="sage-card"><div class="sage-nom">Gunter Pauli</div><div class="sage-desc">L'économie bleue — rien ne se perd, tout nourrit autre chose.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Dialogue démo ── -->
+<div class="demo-section" id="demo">
+  <div style="text-align:center;margin-bottom:32px">
+    <div class="section-eyebrow" style="justify-content:center;display:flex">Exemple de session</div>
+    <h2 class="section-title">Un professeur qui éveille</h2>
+  </div>
+  <div class="demo-chat">
+    <div class="demo-msg demo-prof">
+      <div class="demo-label">Prof</div>
+      <div class="demo-bubble">Est-ce que tu sais que les fourmis pratiquent l'agriculture depuis 50 millions d'années — bien avant l'être humain ? Elles cultivent des champignons dans leurs galeries souterraines. Comment crois-tu qu'elles s'organisent sans chef ni plan central ?</div>
+    </div>
+    <div class="demo-msg demo-eleve">
+      <div class="demo-label">Élève</div>
+      <div class="demo-bubble">Je sais pas... peut-être qu'elles se parlent ?</div>
+    </div>
+    <div class="demo-msg demo-prof">
+      <div class="demo-label">Prof</div>
+      <div class="demo-bubble">Exactement ! Elles communiquent par des substances chimiques appelées phéromones. Chaque fourmi suit des règles simples, et de millions de règles simples naît une intelligence collective extraordinaire. C'est ce qu'on appelle l'émergence — et on retrouve ce phénomène dans le cerveau humain, dans les marchés financiers, et même sur internet. Qu'est-ce qui t'étonne le plus dans cette idée ?</div>
+    </div>
+    <div class="demo-msg" style="align-self:center;font-size:12px;color:var(--text2);font-style:italic">🐒 « Seul on va plus vite, ensemble on va plus loin. » — Proverbe africain</div>
+  </div>
+</div>
+
+<!-- ── Fonctionnalités ── -->
+<div class="section" id="fonctionnalites">
+  <div class="section-eyebrow">Ce que tu découvres</div>
+  <h2 class="section-title">Un univers complet</h2>
+  <p class="section-sub">La Grosse Machine Algorithmique est bien plus qu'un chatbot. C'est un système d'apprentissage gamifié avec des outils de visualisation uniques.</p>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">🌳</div>
+      <div class="feature-title">Forêt du savoir</div>
+      <div class="feature-desc">Chaque sujet exploré fait pousser une branche. Les disciplines se connectent en lianes. Une forêt fractale qui grandit avec toi.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">🌍</div>
+      <div class="feature-title">Globe interactif</div>
+      <div class="feature-desc">Un globe terrestre 3D qui s'allume au fil de tes découvertes. Chaque savant, monument, civilisation étudiés apparaissent sur la carte.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">🃏</div>
+      <div class="feature-title">177 cartes à collectionner</div>
+      <div class="feature-desc">De Socrate à Marie Curie, d'Imhotep à Darwin. Cartes communes, rares et légendaires à débloquer en explorant.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">⚡</div>
+      <div class="feature-title">Défi du jour</div>
+      <div class="feature-desc">Une question surprise chaque jour, adaptée au niveau et aux centres d'intérêt. 20 XP bonus si réussi.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">🔥</div>
+      <div class="feature-title">Streak quotidien</div>
+      <div class="feature-desc">Reviens chaque jour pour entretenir ta flamme. 3 jours, 7 jours, un mois — des badges récompensent la régularité.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true">🐒</div>
+      <div class="feature-title">Cacco le babouin</div>
+      <div class="feature-desc">La mascotte de Thot, dieu égyptien du savoir. Espiègle et sage, il cite des proverbes millénaires à voix haute.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA ── -->
+<div class="cta-section">
+  <div aria-hidden="true" style="font-size:48px;margin-bottom:20px">🐒✨</div>
+  <div class="cta-title">Prêt à explorer ?</div>
+  <p class="cta-sub">Crée ton espace famille en 30 secondes. Gratuit pour commencer.</p>
+  <a href="/index.html" class="btn-primary" style="font-size:16px;padding:16px 40px">Commencer maintenant</a>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>© 2026 La Grosse Machine Algorithmique · François Gaillard · Montrouge (92) &nbsp;·&nbsp; <a href="/mentions.html">Mentions légales & Confidentialité</a></p>
+</footer>
+
+<script>
+// Étoiles animées dans le hero
+const canvas = document.getElementById('starsCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const stars = Array.from({length: 200}, () => ({
+  x: Math.random(), y: Math.random(),
+  r: Math.random() * 1.2,
+  a: Math.random(),
+  speed: 0.0003 + Math.random() * 0.0005
+}));
+
+function animStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.a = 0.1 + 0.7 * Math.abs(Math.sin(Date.now() * s.speed));
+    ctx.beginPath();
+    ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,210,255,${s.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(animStars);
+}
+animStars();
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Grosse Machine Algorithmique — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#c9a84c;--bg0:#0a0a12;--bg1:#0f0f1a;--bg2:#13132a;--bg3:#1a1a35;--border:#2a2a4a;--violet:#534AB7;--text1:#e0e0ff;--text2:#6b6b9a;--green:#1D9E75;--red:#E24B4A;--orange:#EF9F27}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;background:var(--bg0);color:var(--text1);min-height:100vh;padding:24px}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold)}
+.badge-admin{background:var(--violet);color:#EEEDFE;font-size:11px;padding:3px 10px;border-radius:20px;letter-spacing:.08em}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:32px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-n{font-size:28px;font-weight:500;color:var(--gold)}
+.stat-l{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+.famille-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.famille-header{padding:14px 18px;background:var(--bg2);display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.famille-code{font-size:15px;font-weight:500;color:var(--gold);letter-spacing:.1em}
+.famille-meta{font-size:12px;color:var(--text2);margin-left:auto}
+.famille-body{padding:16px 18px;display:none}
+.famille-body.open{display:block}
+.eleve-row{display:grid;grid-template-columns:140px 80px 70px 60px 80px 80px 60px 60px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.eleve-row:last-child{border-bottom:none}
+.eleve-header{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;padding-bottom:8px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:140px 80px 70px 60px 80px 80px 60px 60px;gap:8px}
+.eleve-nom{font-weight:500;color:var(--text1)}
+.xp-badge{background:var(--bg3);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:12px;text-align:center}
+.streak{color:#FF6B35}
+.login-screen{position:fixed;inset:0;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.login-screen.hidden{display:none}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold)}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:300px;display:flex;flex-direction:column;gap:12px}
+.login-input{padding:11px 14px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;color:var(--text1);font-family:'Jost',sans-serif;font-size:15px;outline:none;text-align:center}
+.login-input:focus{border-color:var(--gold)}
+.login-btn{padding:12px;background:var(--violet);border:none;border-radius:8px;color:#EEEDFE;font-family:'Jost',sans-serif;font-size:14px;cursor:pointer}
+.empty{text-align:center;padding:40px;color:var(--text2)}
+.refresh-btn{padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:'Jost',sans-serif;font-size:12px;cursor:pointer;margin-left:auto}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+@media(max-width:700px){
+  .eleve-row,.eleve-header{grid-template-columns:1fr 1fr;gap:4px}
+  .eleve-row>*:nth-child(n+3){display:none}
+  .eleve-header>*:nth-child(n+3){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-title">La Grosse Machine Algorithmique · Admin</div>
+  <div class="login-box">
+    <input class="login-input" id="adminCode" type="password" placeholder="Code administrateur"
+           onkeydown="if(event.key==='Enter') charger()">
+    <button class="login-btn" onclick="charger()">Accéder</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <div class="header">
+    <div class="logo">La Grosse Machine Algorithmique</div>
+    <span class="badge-admin">ADMIN</span>
+    <button class="refresh-btn" onclick="charger(true)">↻ Actualiser</button>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+  <div id="famillesZone"></div>
+</div>
+
+<script>
+let codeAdmin = "";
+
+function charger(refresh=false) {
+  const input = document.getElementById("adminCode");
+  if(!refresh) {
+    codeAdmin = input?.value?.trim() || codeAdmin;
+    if(!codeAdmin) return;
+  }
+
+  fetch(`/api/admin?code=${encodeURIComponent(codeAdmin)}`)
+    .then(r => r.json())
+    .then(data => {
+      if(data.error) {
+        alert("Code incorrect");
+        return;
+      }
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("dashboard").style.display = "block";
+      afficher(data);
+    })
+    .catch(() => alert("Erreur de connexion"));
+}
+
+function afficher(data) {
+  const familles = data.familles || [];
+  const totalEleves = familles.reduce((s,f) => s + f.nb_eleves, 0);
+  const totalMessages = familles.reduce((s,f) => s + f.total_messages, 0);
+
+  // Stats globales
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-card"><div class="stat-n">${familles.length}</div><div class="stat-l">Familles</div></div>
+    <div class="stat-card"><div class="stat-n">${totalEleves}</div><div class="stat-l">Élèves</div></div>
+    <div class="stat-card"><div class="stat-n">${Math.round(totalMessages/2)}</div><div class="stat-l">Conversations</div></div>
+    <div class="stat-card"><div class="stat-n">${totalMessages}</div><div class="stat-l">Messages total</div></div>
+  `;
+
+  const zone = document.getElementById("famillesZone");
+  if(!familles.length) {
+    zone.innerHTML = '<div class="empty">Aucune famille connectée pour l\'instant.</div>';
+    return;
+  }
+
+  zone.innerHTML = familles.map((f,i) => `
+    <div class="famille-card">
+      <div class="famille-header" onclick="toggleFamille(${i})">
+        <div class="famille-code">${f.code}</div>
+        <div style="font-size:12px;color:var(--text2)">${f.nb_eleves} élève${f.nb_eleves>1?'s':''}</div>
+        <div class="famille-meta">${f.total_messages} messages · ▾</div>
+      </div>
+      <div class="famille-body" id="famille-${i}">
+        <div class="eleve-header">
+          <span>Nom</span><span>Niveau</span><span>XP</span>
+          <span>Streak</span><span>Dernière visite</span>
+          <span>Messages</span><span>Sujets</span><span>Cartes</span>
+        </div>
+        ${f.eleves.map(e => `
+          <div class="eleve-row">
+            <span class="eleve-nom">${e.nom}</span>
+            <span>${e.niveau}</span>
+            <span class="xp-badge">${e.xp} XP</span>
+            <span class="streak">${e.streak > 0 ? '🔥 ' + e.streak + 'j' : '—'}</span>
+            <span style="color:var(--text2);font-size:11px">${e.derniere_visite}</span>
+            <span>${Math.round(e.nb_messages/2)}</span>
+            <span>${e.nb_sujets}</span>
+            <span>${e.cartes}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFamille(i) {
+  const el = document.getElementById(`famille-${i}`);
+  el.classList.toggle("open");
+}
+
+// Auto-login si code dans URL
+const params = new URLSearchParams(window.location.search);
+const codeUrl = params.get("code");
+if(codeUrl) {
+  codeAdmin = codeUrl;
+  charger();
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 """
-Prof IA — Backend Flask
+La Grosse Machine Algorithmique — Backend Flask
 Sert l'API de chat, gère les profils élèves, appelle Claude.
 """
 
@@ -186,7 +186,7 @@ def ping():
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     return jsonify({
         "ok": True,
-        "version": "Prof IA Web 1.0",
+        "version": "La Grosse Machine Algorithmique Web 1.0",
         "key_present": bool(key),
         "key_start": key[:8] if key else "VIDE",
         "env_keys": [k for k in os.environ.keys() if "ANTHROP" in k.upper() or "API" in k.upper()]
@@ -754,5 +754,5 @@ def ajouter_headers(response):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"Prof IA backend — http://localhost:{port}")
+    print(f"La Grosse Machine Algorithmique backend — http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
